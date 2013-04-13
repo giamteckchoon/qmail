@@ -29,15 +29,6 @@ conf-cc conf-ld warn-auto.sh
 	echo LD=\'`head -1 conf-ld`\' \
 	) > auto-ccld.sh
 
-auto-gid: \
-load auto-gid.o substdio.a error.a str.a fs.a
-	./load auto-gid substdio.a error.a str.a fs.a 
-
-auto-gid.o: \
-compile auto-gid.c subfd.h substdio.h substdio.h readwrite.h exit.h \
-scan.h fmt.h
-	./compile auto-gid.c
-
 auto-int: \
 load auto-int.o substdio.a error.a str.a fs.a
 	./load auto-int substdio.a error.a str.a fs.a 
@@ -61,15 +52,6 @@ load auto-str.o substdio.a error.a str.a
 auto-str.o: \
 compile auto-str.c substdio.h readwrite.h exit.h
 	./compile auto-str.c
-
-auto-uid: \
-load auto-uid.o substdio.a error.a str.a fs.a
-	./load auto-uid substdio.a error.a str.a fs.a 
-
-auto-uid.o: \
-compile auto-uid.c subfd.h substdio.h substdio.h readwrite.h exit.h \
-scan.h fmt.h
-	./compile auto-uid.c
 
 auto_break.c: \
 auto-str conf-break
@@ -112,22 +94,8 @@ auto_split.o: \
 compile auto_split.c
 	./compile auto_split.c
 
-auto_uids.c: \
-auto-uid auto-gid conf-users conf-groups
-	( ./auto-uid auto_uida `head -1 conf-users` \
-	&&./auto-uid auto_uidd `head -2 conf-users | tail -1` \
-	&&./auto-uid auto_uidl `head -3 conf-users | tail -1` \
-	&&./auto-uid auto_uido `head -4 conf-users | tail -1` \
-	&&./auto-uid auto_uidp `head -5 conf-users | tail -1` \
-	&&./auto-uid auto_uidq `head -6 conf-users | tail -1` \
-	&&./auto-uid auto_uidr `head -7 conf-users | tail -1` \
-	&&./auto-uid auto_uids `head -8 conf-users | tail -1` \
-	&&./auto-gid auto_gidq `head -1 conf-groups` \
-	&&./auto-gid auto_gidn `head -2 conf-groups | tail -1` \
-	) > auto_uids.c.tmp && mv auto_uids.c.tmp auto_uids.c
-
 auto_uids.o: \
-compile auto_uids.c
+compile auto_uids.c auto_uids.h
 	./compile auto_uids.c
 
 auto_usera.c: \
@@ -742,17 +710,16 @@ seek.h fork.h
 	./compile idedit.c
 
 install: \
-load install.o fifo.o hier.o auto_qmail.o auto_split.o auto_uids.o \
+load install.o fifo.o hier.o auto_split.o auto_uids.o \
 strerr.a substdio.a open.a error.a str.a fs.a
-	./load install fifo.o hier.o auto_qmail.o auto_split.o \
+	./load install fifo.o hier.o auto_split.o \
 	auto_uids.o strerr.a substdio.a open.a error.a str.a fs.a 
 
 install-big: \
-load install-big.o fifo.o install.o auto_qmail.o auto_split.o \
-auto_uids.o strerr.a substdio.a open.a error.a str.a fs.a
-	./load install-big fifo.o install.o auto_qmail.o \
-	auto_split.o auto_uids.o strerr.a substdio.a open.a error.a \
-	str.a fs.a 
+load install-big.o fifo.o install.o auto_split.o auto_uids.o \
+strerr.a substdio.a open.a error.a str.a fs.a
+	./load install-big fifo.o install.o auto_split.o auto_uids.o \
+	strerr.a substdio.a open.a error.a str.a fs.a 
 
 install-big.o: \
 compile install-big.c auto_split.h auto_uids.h fmt.h fifo.h
@@ -764,9 +731,9 @@ exit.h
 	./compile install.c
 
 instcheck: \
-load instcheck.o fifo.o hier.o auto_qmail.o auto_split.o auto_uids.o \
+load instcheck.o fifo.o hier.o auto_split.o auto_uids.o \
 strerr.a substdio.a error.a str.a fs.a
-	./load instcheck fifo.o hier.o auto_qmail.o auto_split.o \
+	./load instcheck fifo.o hier.o auto_split.o \
 	auto_uids.o strerr.a substdio.a error.a str.a fs.a 
 
 instcheck.o: \
@@ -806,7 +773,7 @@ qmail-pw2u qmail-qread qmail-qstat qmail-tcpto qmail-tcpok \
 qmail-pop3d qmail-popup qmail-qmqpc qmail-qmqpd qmail-qmtpd \
 qmail-smtpd sendmail tcp-env qmail-newmrh config config-fast dnscname \
 dnsptr dnsip dnsmxip dnsfq hostname ipmeprint qreceipt qsmhook qbiff \
-forward preline condredirect bouncesaying except maildirmake \
+forward preline condredirect bouncesaying except maildirmake make-owners \
 maildir2mbox maildirwatch qail elq pinq idedit install-big install \
 instcheck home home+df proc proc+df binm1 binm1+df binm2 binm2+df \
 binm3 binm3+df qmail-todo
@@ -918,6 +885,15 @@ make-makelib: \
 make-makelib.sh auto-ccld.sh
 	cat auto-ccld.sh make-makelib.sh > make-makelib
 	chmod 755 make-makelib
+
+make-owners: \
+make-owners.head conf-users conf-groups
+	cat make-owners.head >make-owners
+	for num in a d l o p q r s; do read name; \
+		echo checkuid $$num $$name; done <conf-users >>make-owners
+	for num in q n; do read name; \
+		echo checkgid $$num $$name; done <conf-groups >>make-owners
+	chmod +x make-owners
 
 makelib: \
 make-makelib warn-auto.sh systype
@@ -1048,7 +1024,7 @@ proc+df.sh conf-qmail
 	chmod 755 proc+df
 
 prot.o: \
-compile prot.c hasshsgr.h prot.h
+compile prot.c hasshsgr.h prot.h auto_uids.h
 	./compile prot.c
 
 qail: \
@@ -1202,10 +1178,9 @@ qmail-lspawn: \
 load qmail-lspawn.o spawn.o prot.o slurpclose.o coe.o sig.a wait.a \
 case.a cdb.a fd.a open.a stralloc.a alloc.a substdio.a error.a str.a \
 fs.a auto_qmail.o auto_uids.o auto_spawn.o
-	./load qmail-lspawn spawn.o prot.o slurpclose.o coe.o \
+	./load qmail-lspawn spawn.o prot.o slurpclose.o coe.o auto_uids.o \
 	sig.a wait.a case.a cdb.a fd.a open.a stralloc.a alloc.a \
-	substdio.a error.a str.a fs.a auto_qmail.o auto_uids.o \
-	auto_spawn.o 
+	substdio.a error.a str.a fs.a auto_qmail.o auto_spawn.o 
 
 qmail-lspawn.0: \
 qmail-lspawn.8
@@ -1423,10 +1398,10 @@ qmail-queue: \
 load qmail-queue.o triggerpull.o fmtqfn.o now.o date822fmt.o \
 datetime.a seek.a ndelay.a open.a sig.a alloc.a substdio.a error.a \
 str.a fs.a auto_qmail.o auto_split.o auto_uids.o
-	./load qmail-queue triggerpull.o fmtqfn.o now.o \
+	./load qmail-queue triggerpull.o fmtqfn.o now.o auto_uids.o \
 	date822fmt.o datetime.a seek.a ndelay.a open.a sig.a \
 	alloc.a substdio.a error.a str.a fs.a auto_qmail.o \
-	auto_split.o auto_uids.o 
+	auto_split.o
 
 qmail-queue.0: \
 qmail-queue.8
@@ -1465,10 +1440,9 @@ qmail-rspawn: \
 load qmail-rspawn.o spawn.o tcpto_clean.o now.o coe.o sig.a open.a \
 seek.a lock.a wait.a fd.a stralloc.a alloc.a substdio.a error.a str.a \
 auto_qmail.o auto_uids.o auto_spawn.o
-	./load qmail-rspawn spawn.o tcpto_clean.o now.o coe.o \
+	./load qmail-rspawn spawn.o tcpto_clean.o now.o coe.o auto_uids.o \
 	sig.a open.a seek.a lock.a wait.a fd.a stralloc.a alloc.a \
-	substdio.a error.a str.a auto_qmail.o auto_uids.o \
-	auto_spawn.o 
+	substdio.a error.a str.a auto_qmail.o auto_spawn.o 
 
 qmail-rspawn.0: \
 qmail-rspawn.8
@@ -1558,8 +1532,10 @@ exit.h rcpthosts.h timeoutread.h timeoutwrite.h commands.h
 	./compile qmail-smtpd.c
 
 qmail-start: \
-load qmail-start.o prot.o fd.a auto_uids.o
-	./load qmail-start prot.o fd.a auto_uids.o 
+load qmail-start.o prot.o fd.a auto_uids.o auto_qmail.o \
+	open_read.o substdio.a error.a
+	./load qmail-start prot.o auto_uids.o fd.a \
+	auto_qmail.o open_read.o substdio.a str.a error.a
 
 qmail-start.0: \
 qmail-start.8
@@ -1807,7 +1783,7 @@ trynpbg1.c trysyslog.c conf-cc conf-ld home.sh home+df.sh proc.sh \
 proc+df.sh binm1.sh binm2.sh binm3.sh binm1+df.sh binm2+df.sh \
 binm3+df.sh find-systype.sh make-compile.sh make-load.sh \
 make-makelib.sh trycpp.c warn-auto.sh auto-str.c auto-int.c \
-auto-int8.c auto-gid.c auto-uid.c hier.c install.c instcheck.c \
+auto-int8.c hier.c install.c instcheck.c \
 install-big.c alloc.3 alloc.h alloc.c alloc_re.c case.3 case.h \
 case_diffb.c case_diffs.c case_lowerb.c case_lowers.c case_starts.c \
 cdb.3 cdb.h cdb_hash.c cdb_seek.c cdb_unpack.c cdbmake.h \

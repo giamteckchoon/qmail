@@ -3,6 +3,15 @@
 #include "fmt.h"
 #include "fifo.h"
 
+/* Fool auto_uids.o into pulling the uid/gid files from the subdirectory
+ * "owners" in the current directory.  This requires that the command
+ * "./make-owners ." be executed in the source directory before running
+ * qmail-hier.  This unfortunately hoses up the standard install, and so
+ * (it will install into the current directory instead of /var/qmail),
+ * and so it requires the install-path patch for proper operation.
+ */
+char auto_qmail[] = ".";
+
 char buf[100 + FMT_ULONG];
 
 void dsplit(auto_qmail,base,uid,mode)
@@ -30,6 +39,18 @@ int mode;
 void hier(auto_qmail)
 char *auto_qmail;
 {
+  get_uid(auto_uida);
+  get_uid(auto_uidd);
+  get_uid(auto_uidl);
+  get_uid(auto_uido);
+  get_uid(auto_uidp);
+  get_uid(auto_uidq);
+  get_uid(auto_uidr);
+  get_uid(auto_uids);
+
+  get_gid(auto_gidq);
+  get_gid(auto_gidn);
+
   h(auto_qmail,auto_uido,auto_gidq,0755);
 
   d(auto_qmail,"control",auto_uido,auto_gidq,0755);

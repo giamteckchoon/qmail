@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -e
+dir=$1
+if ! [ -d $dir ]
+then
+	echo "usage: make-owners directory"
+	exit 1
+fi
+dir=$dir/owners
+if ! [ -d $dir ]
+then
+	echo "make-owners: directory '$dir' does not exist, creating."
+	mkdir $dir
+fi
+
+checkuid() {
+  file=$dir/uid$1
+  if ! [ -e $file ]; then
+    echo "make-owners: UID file '$file' does not exist, creating."
+    touch $file
+  fi
+  chown $2 $file
+}
+
+checkgid() {
+  file=$dir/gid$1
+  if ! [ -e $file ]; then
+    echo "make-owners: GID file '$file' does not exist, creating."
+    touch $file
+  fi
+  chgrp $2 $file
+}
+

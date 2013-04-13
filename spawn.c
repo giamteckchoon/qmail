@@ -110,7 +110,7 @@ void docmd()
   { close(fdmess); err("Zqmail-spawn unable to fstat message. (#4.3.0)\n"); return; }
  if ((st.st_mode & S_IFMT) != S_IFREG)
   { close(fdmess); err("ZSorry, message has wrong type. (#4.3.5)\n"); return; }
- if (st.st_uid != auto_uidq) /* aaack! qmailq has to be trusted! */
+ if (st.st_uid != get_uid(auto_uidq)) /* aaack! qmailq has to be trusted! */
   /* your security is already toast at this point. damage control... */
   { close(fdmess); err("ZSorry, message has wrong owner. (#4.3.5)\n"); return; }
 

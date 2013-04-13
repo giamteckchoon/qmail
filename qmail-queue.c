@@ -73,11 +73,11 @@ char *s;
  i = fmt_str(s,"Received: (qmail "); len += i; if (s) s += i;
  i = fmt_ulong(s,mypid); len += i; if (s) s += i;
  i = fmt_str(s," invoked "); len += i; if (s) s += i;
- if (uid == auto_uida)
+ if (uid == get_uid(auto_uida))
   { i = fmt_str(s,"by alias"); len += i; if (s) s += i; }
- else if (uid == auto_uidd)
+ else if (uid == get_uid(auto_uidd))
   { i = fmt_str(s,"from network"); len += i; if (s) s += i; }
- else if (uid == auto_uids)
+ else if (uid == get_uid(auto_uids))
   { i = fmt_str(s,"for bounce"); len += i; if (s) s += i; }
  else
   {

@@ -164,27 +164,27 @@ void main()
   substdio_puts(subfdout,".\n");
 
   substdio_puts(subfdout,"user ids: ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_uida));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_uid(auto_uida)));
   substdio_puts(subfdout,", ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_uidd));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_uid(auto_uidd)));
   substdio_puts(subfdout,", ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_uidl));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_uid(auto_uidl)));
   substdio_puts(subfdout,", ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_uido));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_uid(auto_uido)));
   substdio_puts(subfdout,", ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_uidp));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_uid(auto_uidp)));
   substdio_puts(subfdout,", ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_uidq));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_uid(auto_uidq)));
   substdio_puts(subfdout,", ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_uidr));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_uid(auto_uidr)));
   substdio_puts(subfdout,", ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_uids));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_uid(auto_uids)));
   substdio_puts(subfdout,".\n");
 
   substdio_puts(subfdout,"group ids: ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_gidn));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_gid(auto_gidn)));
   substdio_puts(subfdout,", ");
-  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) auto_gidq));
+  substdio_put(subfdout,num,fmt_ulong(num,(unsigned long) get_gid(auto_gidq)));
   substdio_puts(subfdout,".\n");
 
   if (chdir(auto_qmail) == -1) {

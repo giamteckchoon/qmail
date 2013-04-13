@@ -13,4 +13,7 @@ extern int auto_uids;
 extern int auto_gidn;
 extern int auto_gidq;
 
+extern int get_uid();
+extern int get_gid();
+
 #endif

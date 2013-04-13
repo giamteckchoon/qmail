@@ -150,11 +150,6 @@ cdb_hash.o
 cdb_unpack.o
 cdb_seek.o
 cdb.a
-auto-uid.o
-auto-uid
-auto-gid.o
-auto-gid
-auto_uids.c
 auto_uids.o
 qmail-lspawn
 qmail-getpw.o
@@ -294,6 +289,7 @@ except.o
 except
 maildirmake.o
 maildirmake
+make-owners
 maildir2mbox.o
 maildir2mbox
 maildirwatch.o
