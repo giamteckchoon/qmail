@@ -101,8 +101,15 @@ int mode;
   perm("",home,"/",file,S_IFREG,uid,gid,mode);
 }
 
-void main()
+void main(argc,argv)
+int argc;
+char **argv;
 {
-  hier();
+  char *to;
+
+  to = argv[1];
+  if (!to) strerr_die2x(100,FATAL,"instcheck: usage: instcheck dir");
+
+  hier(to);
   _exit(0);
 }

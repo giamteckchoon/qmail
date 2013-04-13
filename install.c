@@ -152,13 +152,20 @@ int mode;
     strerr_die6sys(111,FATAL,"unable to chmod ",home,"/",file,": ");
 }
 
-void main()
+void main(argc,argv)
+int argc;
+char **argv;
 {
+  char *to;
+
+  to = argv[1];
+  if (!to) strerr_die2x(100,FATAL,"install: usage: install dir");
+
   fdsourcedir = open_read(".");
   if (fdsourcedir == -1)
     strerr_die2sys(111,FATAL,"unable to open current directory: ");
 
   umask(077);
-  hier();
+  hier(to);
   _exit(0);
 }

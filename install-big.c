@@ -1,4 +1,3 @@
-#include "auto_qmail.h"
 #include "auto_split.h"
 #include "auto_uids.h"
 #include "fmt.h"
@@ -6,7 +5,8 @@
 
 char buf[100 + FMT_ULONG];
 
-void dsplit(base,uid,mode)
+void dsplit(auto_qmail,base,uid,mode)
+char *auto_qmail;
 char *base; /* must be under 100 bytes */
 int uid;
 int mode;
@@ -27,7 +27,8 @@ int mode;
   }
 }
 
-void hier()
+void hier(auto_qmail)
+char *auto_qmail;
 {
   h(auto_qmail,auto_uido,auto_gidq,0755);
 
@@ -54,10 +55,10 @@ void hier()
   d(auto_qmail,"queue/todo",auto_uidq,auto_gidq,0750);
   d(auto_qmail,"queue/bounce",auto_uids,auto_gidq,0700);
 
-  dsplit("queue/mess",auto_uidq,0750);
-  dsplit("queue/info",auto_uids,0700);
-  dsplit("queue/local",auto_uids,0700);
-  dsplit("queue/remote",auto_uids,0700);
+  dsplit(auto_qmail,"queue/mess",auto_uidq,0750);
+  dsplit(auto_qmail,"queue/info",auto_uids,0700);
+  dsplit(auto_qmail,"queue/local",auto_uids,0700);
+  dsplit(auto_qmail,"queue/remote",auto_uids,0700);
 
   d(auto_qmail,"queue/lock",auto_uidq,auto_gidq,0750);
   z(auto_qmail,"queue/lock/tcpto",1024,auto_uidr,auto_gidq,0644);
