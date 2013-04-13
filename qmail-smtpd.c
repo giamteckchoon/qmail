@@ -52,6 +52,7 @@ void straynewline() { out("451 See http://pobox.com/~djb/docs/smtplf.html.\r\n")
 void err_bmf() { out("553 sorry, your envelope sender is in my badmailfrom list (#5.7.1)\r\n"); }
 void err_nogateway() { out("553 sorry, that domain isn't in my list of allowed rcpthosts (#5.7.1)\r\n"); }
 void err_unimpl() { out("502 unimplemented (#5.5.1)\r\n"); }
+void err_unrecog() { out("500 unrecognised (#5.5.2)\r\n"); }
 void err_syntax() { out("555 syntax error (#5.5.4)\r\n"); }
 void err_wantmail() { out("503 MAIL first (#5.5.1)\r\n"); }
 void err_wantrcpt() { out("503 RCPT first (#5.5.1)\r\n"); }
@@ -425,7 +426,7 @@ struct commands smtpcommands[] = {
 , { "help", smtp_help, flush }
 , { "noop", err_noop, flush }
 , { "vrfy", err_vrfy, flush }
-, { 0, err_unimpl, flush }
+, { 0, err_unrecog, flush }
 } ;
 
 void main()
