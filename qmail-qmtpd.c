@@ -11,6 +11,7 @@
 #include "readwrite.h"
 #include "control.h"
 #include "received.h"
+#include "constmap.h"
 
 void badproto() { _exit(100); }
 void resources() { _exit(111); }
@@ -57,6 +58,22 @@ void getcomma()
   if (ch != ',') badproto();
 }
 
+int flagbarf;
+int bmfok = 0;
+stralloc bmf = {0};
+struct constmap mapbmf;
+
+int bmfcheck(buf,len) char *buf; int len;
+{
+  int j;
+  if (!bmfok) return 0;
+  if (constmap(&mapbmf,buf,len)) return 1;
+  j = byte_rchr(buf,len,'@');
+  if (j < len)
+    if (constmap(&mapbmf,buf + j,len - j)) return 1;
+  return 0;
+}
+
 unsigned int databytes = 0;
 unsigned int bytestooverflow = 0;
 struct qmail qq;
@@ -96,6 +113,12 @@ main()
  
   if (control_init() == -1) resources();
   if (rcpthosts_init() == -1) resources();
+
+  bmfok = control_readfile(&bmf,"control/badmailfrom",0);
+  if (bmfok == -1) resources();
+  if (bmfok)
+    if (!constmap_init(&mapbmf,bmf.s,bmf.len,0)) resources();
+
   relayclient = env_get("RELAYCLIENT");
   relayclientlen = relayclient ? str_len(relayclient) : 0;
  
@@ -181,6 +204,9 @@ main()
  
     flagbother = 0;
     qmail_from(&qq,buf);
+
+    flagbarf = bmfcheck(buf,len);
+
     if (!flagsenderok) qmail_fail(&qq);
  
     biglen = getlen();
@@ -216,7 +242,9 @@ main()
             case -1: resources();
             case 0: failure.s[failure.len - 1] = 'D';
           }
- 
+
+        if (flagbarf) { failure.s[failure.len -1] = 'B'; }
+
         if (!failure.s[failure.len - 1]) {
           qmail_to(&qq,buf);
           flagbother = 1;
@@ -257,6 +285,9 @@ main()
           break;
         case 'D':
           substdio_puts(&ssout,"66:Dsorry, that domain isn't in my list of allowed rcpthosts (#5.7.1),");
+          break;
+        case 'B':
+          substdio_puts(&ssout,"63:Dsorry, your envelope sender is in my badmailfrom list (#5.7.1),");
           break;
         default:
           substdio_puts(&ssout,"46:Dsorry, I can't handle that recipient (#5.1.3),");
