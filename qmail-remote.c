@@ -222,7 +222,10 @@ void smtp()
   int flagbother;
   int i;
  
-  if (smtpcode() != 220) quit("ZConnected to "," but greeting failed");
+  code = smtpcode();
+  if (code >= 500 && code < 600) return;
+  if (code >= 400 && code < 500) return; /* try next MX, see RFC-2821 */
+  if (code != 220) quit("ZConnected to "," but greeting failed");
  
   substdio_puts(&smtpto,"HELO ");
   substdio_put(&smtpto,helohost.s,helohost.len);
@@ -417,7 +420,7 @@ char **argv;
     if (timeoutconn(smtpfd,&ip.ix[i].ip,(unsigned int) port,timeoutconnect) == 0) {
       tcpto_err(&ip.ix[i].ip,0);
       partner = ip.ix[i].ip;
-      smtp(); /* does not return */
+      smtp(); /* only returns when the next MX is to be tried */
     }
     tcpto_err(&ip.ix[i].ip,errno == error_timeout);
     close(smtpfd);
