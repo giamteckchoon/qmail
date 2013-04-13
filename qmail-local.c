@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 #include "readwrite.h"
 #include "sig.h"
@@ -41,6 +42,20 @@ void temp_slowlock()
 void temp_qmail(fn) char *fn;
 { strerr_die5x(111,"Unable to open ",fn,": ",error_str(errno),". (#4.3.0)"); }
 
+/* writes ulong u in hex to char *s, does not NULL-terminate */
+unsigned int fmt_xlong(s,u) char *s; unsigned long u;
+{
+ unsigned int len; unsigned long q; unsigned long c;
+ len = 1; q = u;
+ while (q > 15) { ++len; q /= 16; }
+ if (s)
+  {
+   s += len;
+   do { c = u & 15; *--s = (c > 9 ? 'a' - 10 : '0') + c; u /= 16; } while(u);
+  }
+ return len;
+}
+
 int flagdoit;
 int flag99;
 
@@ -63,6 +78,7 @@ stralloc ueo = {0};
 stralloc cmds = {0};
 stralloc messline = {0};
 stralloc foo = {0};
+stralloc hostname = {0};
 
 char buf[1024];
 char outbuf[1024];
@@ -78,7 +94,7 @@ void maildir_child(dir)
 char *dir;
 {
  unsigned long pid;
- unsigned long time;
+ struct timeval time;
  char host[64];
  char *s;
  int loop;
@@ -92,21 +108,37 @@ char *dir;
  pid = getpid();
  host[0] = 0;
  gethostname(host,sizeof(host));
+
+ s = host;
+ for (loop = 0; loop < str_len(host); ++loop)
+  {
+   if (host[loop] == '/')
+    {
+     if (!stralloc_cats(&hostname,"057")) temp_nomem();
+     continue;
+    }
+   if (host[loop] == ':')
+    {
+     if (!stralloc_cats(&hostname,"072")) temp_nomem();
+     continue;
+    }
+   if (!stralloc_append(&hostname,s+loop)) temp_nomem();
+  }
+
  for (loop = 0;;++loop)
   {
-   time = now();
+   gettimeofday(&time, 0);
    s = fntmptph;
    s += fmt_str(s,"tmp/");
-   s += fmt_ulong(s,time); *s++ = '.';
-   s += fmt_ulong(s,pid); *s++ = '.';
-   s += fmt_strn(s,host,sizeof(host)); *s++ = 0;
+   s += fmt_ulong(s,time.tv_sec); *s++ = '.';
+   *s++ = 'M'; s += fmt_ulong(s,time.tv_usec);
+   *s++ = 'P'; s += fmt_ulong(s,pid); *s++ = '.';
+   s += fmt_strn(s,hostname.s,hostname.len); *s++ = 0;
    if (stat(fntmptph,&st) == -1) if (errno == error_noent) break;
    /* really should never get to this point */
    if (loop == 2) _exit(1);
    sleep(2);
   }
- str_copy(fnnewtph,fntmptph);
- byte_copy(fnnewtph,3,"new");
 
  alarm(86400);
  fd = open_excl(fntmptph);
@@ -124,8 +156,23 @@ char *dir;
   }
 
  if (substdio_flush(&ssout) == -1) goto fail;
+ if (fstat(fd, &st) == -1) goto fail;
  if (fsync(fd) == -1) goto fail;
  if (close(fd) == -1) goto fail; /* NFS dorks */
+
+ s = fnnewtph;
+ s += fmt_str(s,"new/");
+ s += fmt_ulong(s,time.tv_sec); *s++ = '.';
+
+ /* in hexadecimal */
+ *s++ = 'I'; s += fmt_xlong(s,st.st_ino);
+ *s++ = 'V'; s += fmt_xlong(s,st.st_dev);
+
+ /* in decimal */
+ *s++ = 'M'; s += fmt_ulong(s,time.tv_usec);
+ *s++ = 'P'; s += fmt_ulong(s,pid); *s++ = '.';
+
+ s += fmt_strn(s,hostname.s,hostname.len); *s++ = 0;
 
  if (link(fntmptph,fnnewtph) == -1) goto fail;
    /* if it was error_exist, almost certainly successful; i hate NFS */
