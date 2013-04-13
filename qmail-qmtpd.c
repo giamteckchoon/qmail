@@ -46,6 +46,8 @@ unsigned long getlen()
   for (;;) {
     substdio_get(&ssin,&ch,1);
     if (ch == ':') return len;
+    /* trap non-numeric input in netstring: */
+    if ((ch < '0') || (ch > '9')) badproto();
     if (len > 200000000) resources();
     len = 10 * len + (ch - '0');
   }
@@ -219,6 +221,8 @@ main()
         substdio_get(&ssin,&ch,1);
         --biglen;
         if (ch == ':') break;
+        /* trap non-numeric input in netstring: */
+        if ((ch < '0') || (ch > '9')) badproto();
         if (len > 200000000) resources();
         len = 10 * len + (ch - '0');
       }
