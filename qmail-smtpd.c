@@ -96,6 +96,8 @@ stralloc liphost = {0};
 int bmfok = 0;
 stralloc bmf = {0};
 struct constmap mapbmf;
+int tarpitcount = 0;
+int tarpitdelay = 5;
 
 void setup()
 {
@@ -109,6 +111,15 @@ void setup()
   if (liphostok == -1) die_control();
   if (control_readint(&timeout,"control/timeoutsmtpd") == -1) die_control();
   if (timeout <= 0) timeout = 1;
+
+  if (control_readint(&tarpitcount,"control/tarpitcount") == -1) die_control();
+  if (tarpitcount < 0) tarpitcount = 0;
+  x = env_get("TARPITCOUNT");
+  if (x) { scan_ulong(x,&u); tarpitcount = u; };
+  if (control_readint(&tarpitdelay,"control/tarpitdelay") == -1) die_control();
+  if (tarpitdelay < 0) tarpitdelay = 0;
+  x = env_get("TARPITDELAY");
+  if (x) { scan_ulong(x,&u); tarpitdelay = u; };
 
   if (rcpthosts_init() == -1) die_control();
 
@@ -227,6 +238,7 @@ int seenmail = 0;
 int flagbarf; /* defined if seenmail */
 stralloc mailfrom = {0};
 stralloc rcptto = {0};
+int rcptcount;
 
 void smtp_helo(arg) char *arg;
 {
@@ -251,6 +263,7 @@ void smtp_mail(arg) char *arg;
   if (!stralloc_copys(&rcptto,"")) die_nomem();
   if (!stralloc_copys(&mailfrom,addr.s)) die_nomem();
   if (!stralloc_0(&mailfrom)) die_nomem();
+  rcptcount = 0;
   out("250 ok\r\n");
 }
 void smtp_rcpt(arg) char *arg; {
@@ -267,6 +280,7 @@ void smtp_rcpt(arg) char *arg; {
   if (!stralloc_cats(&rcptto,"T")) die_nomem();
   if (!stralloc_cats(&rcptto,addr.s)) die_nomem();
   if (!stralloc_0(&rcptto)) die_nomem();
+  if (tarpitcount && ++rcptcount >= tarpitcount) while (sleep(tarpitdelay));
   out("250 ok\r\n");
 }
 
