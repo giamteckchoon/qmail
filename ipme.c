@@ -53,7 +53,7 @@ int ipme_init()
   if (!ipalloc_append(&ipme,&ix)) { return 0; }
   if ((s = socket(AF_INET,SOCK_STREAM,0)) == -1) return -1;
  
-  len = 256;
+  len = 8192; /* any value big enough to get all the interfaces in one read is good */
   for (;;) {
     if (!stralloc_ready(&buf,len)) { close(s); return 0; }
     buf.len = 0;
@@ -65,7 +65,7 @@ int ipme_init()
         break;
       }
     if (len > 200000) { close(s); return -1; }
-    len += 100 + (len >> 2);
+    len *= 2;
   }
   x = buf.s;
   while (x < buf.s + buf.len) {
