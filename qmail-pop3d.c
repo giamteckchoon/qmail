@@ -148,13 +148,13 @@ void getlist()
 
 void pop3_stat()
 {
-  int i;
+  int i, j=0;
   unsigned long total;
  
   total = 0;
-  for (i = 0;i < numm;++i) if (!m[i].flagdeleted) total += m[i].size;
+  for (i = 0;i < numm;++i) if (!m[i].flagdeleted) { total += m[i].size; j++; }
   puts("+OK ");
-  put(strnum,fmt_uint(strnum,numm));
+  put(strnum,fmt_uint(strnum,j));
   puts(" ");
   put(strnum,fmt_ulong(strnum,total));
   puts("\r\n");
