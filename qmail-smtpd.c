@@ -480,14 +480,13 @@ int authenticate(void)
   if (!stralloc_0(&resp)) die_nomem();
 
   if (fd_copy(2,1) == -1) return err_pipe();
-  close(3);
   if (pipe(pi) == -1) return err_pipe();
-  if (pi[0] != 3) return err_pipe();
   switch(child = fork()) {
     case -1:
       return err_fork();
     case 0:
       close(pi[1]);
+      if (0 > fd_copy(3,pi[0])) _exit(1);
       sig_pipedefault();
       execvp(*childargs, childargs);
       _exit(1);
