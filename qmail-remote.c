@@ -192,23 +192,38 @@ char *append;
 void blast()
 {
   int r;
+  int i;
+  int o;
   char ch;
+  char in[4096];
+  char out[4096*2+1];
+  int sol;
 
-  for (;;) {
-    r = substdio_get(&ssin,&ch,1);
+  for (sol = 1;;) {
+    r = substdio_get(&ssin,in,sizeof in);
     if (r == 0) break;
     if (r == -1) temp_read();
-    if (ch == '.')
-      substdio_put(&smtpto,".",1);
-    while (ch != '\n') {
-      substdio_put(&smtpto,&ch,1);
-      r = substdio_get(&ssin,&ch,1);
-      if (r == 0) perm_partialline();
-      if (r == -1) temp_read();
+    for (i = o = 0; i < r; ) {
+      if (sol && in[i] == '.') {
+	out[o++] = '.';
+	out[o++] = in[i++];
+      }
+      sol = 0;
+      while (i < r) {
+	if (in[i] == '\n') {
+	  sol = 1;
+	  ++i;
+	  out[o++] = '\r';
+	  out[o++] = '\n';
+	  break;
+	}
+	out[o++] = in[i++];
+      }
     }
-    substdio_put(&smtpto,"\r\n",2);
+    substdio_put(&smtpto,out,o);
   }
  
+  if (!sol) perm_partialline();
   flagcritical = 1;
   substdio_put(&smtpto,".\r\n",3);
   substdio_flush(&smtpto);
