@@ -245,6 +245,7 @@ qmail-qmqpd
 qmail-qmtpd.o
 rcpthosts.o
 qmail-qmtpd
+base64.o
 qmail-smtpd.o
 qmail-smtpd
 sendmail.o

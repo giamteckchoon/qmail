@@ -23,7 +23,10 @@
 #include "timeoutread.h"
 #include "timeoutwrite.h"
 #include "commands.h"
+#include "wait.h"
+#include "fd.h"
 
+#define AUTHCRAM
 #define MAXHOPS 100
 unsigned int databytes = 0;
 int timeout = 1200;
@@ -60,6 +63,15 @@ void err_noop() { out("250 ok\r\n"); }
 void err_vrfy() { out("252 send some mail, i'll try my best\r\n"); }
 void err_qqt() { out("451 qqt failure (#4.3.0)\r\n"); }
 
+int err_child() { out("454 oops, problem with child and I can't auth (#4.3.0)\r\n"); return -1; }
+int err_fork() { out("454 oops, child won't start and I can't auth (#4.3.0)\r\n"); return -1; }
+int err_pipe() { out("454 oops, unable to open pipe and I can't auth (#4.3.0)\r\n"); return -1; }
+int err_write() { out("454 oops, unable to write pipe and I can't auth (#4.3.0)\r\n"); return -1; }
+void err_authd() { out("503 you're already authenticated (#5.5.0)\r\n"); }
+void err_authmail() { out("503 no auth during mail transaction (#5.5.0)\r\n"); }
+int err_noauth() { out("504 auth type unimplemented (#5.5.1)\r\n"); return -1; }
+int err_authabrt() { out("501 auth exchange cancelled (#5.0.0)\r\n"); return -1; }
+int err_input() { out("501 malformed auth input (#5.5.4)\r\n"); return -1; }
 
 stralloc greeting = {0};
 
@@ -248,7 +260,15 @@ void smtp_helo(arg) char *arg;
 }
 void smtp_ehlo(arg) char *arg;
 {
-  smtp_greet("250-"); out("\r\n250-PIPELINING\r\n250 8BITMIME\r\n");
+  smtp_greet("250-");
+#ifdef AUTHCRAM
+  out("\r\n250-AUTH LOGIN CRAM-MD5 PLAIN");
+  out("\r\n250-AUTH=LOGIN CRAM-MD5 PLAIN");
+#else
+  out("\r\n250-AUTH LOGIN PLAIN");
+  out("\r\n250-AUTH=LOGIN PLAIN");
+#endif
+  out("\r\n250-PIPELINING\r\n250 8BITMIME\r\n");
   seenmail = 0; dohelo(arg);
 }
 void smtp_rset()
@@ -415,10 +435,226 @@ void smtp_data() {
   out("\r\n");
 }
 
+
+char unique[FMT_ULONG + FMT_ULONG + 3];
+static stralloc authin = {0};
+static stralloc user = {0};
+static stralloc pass = {0};
+static stralloc resp = {0};
+static stralloc slop = {0};
+char *hostname;
+char **childargs;
+substdio ssup;
+char upbuf[128];
+int authd = 0;
+
+int authgetl(void) {
+  int i;
+
+  if (!stralloc_copys(&authin, "")) die_nomem();
+
+  for (;;) {
+    if (!stralloc_readyplus(&authin,1)) die_nomem(); /* XXX */
+    i = substdio_get(&ssin,authin.s + authin.len,1);
+    if (i != 1) die_read();
+    if (authin.s[authin.len] == '\n') break;
+    ++authin.len;
+  }
+
+  if (authin.len > 0) if (authin.s[authin.len - 1] == '\r') --authin.len;
+  authin.s[authin.len] = 0;
+
+  if (*authin.s == '*' && *(authin.s + 1) == 0) { return err_authabrt(); }
+  if (authin.len == 0) { return err_input(); }
+  return authin.len;
+}
+
+int authenticate(void)
+{
+  int child;
+  int wstat;
+  int pi[2];
+
+  if (!stralloc_0(&user)) die_nomem();
+  if (!stralloc_0(&pass)) die_nomem();
+  if (!stralloc_0(&resp)) die_nomem();
+
+  if (fd_copy(2,1) == -1) return err_pipe();
+  close(3);
+  if (pipe(pi) == -1) return err_pipe();
+  if (pi[0] != 3) return err_pipe();
+  switch(child = fork()) {
+    case -1:
+      return err_fork();
+    case 0:
+      close(pi[1]);
+      sig_pipedefault();
+      execvp(*childargs, childargs);
+      _exit(1);
+  }
+  close(pi[0]);
+
+  substdio_fdbuf(&ssup,write,pi[1],upbuf,sizeof upbuf);
+  if (substdio_put(&ssup,user.s,user.len) == -1) return err_write();
+  if (substdio_put(&ssup,pass.s,pass.len) == -1) return err_write();
+  if (substdio_put(&ssup,resp.s,resp.len) == -1) return err_write();
+  if (substdio_flush(&ssup) == -1) return err_write();
+
+  close(pi[1]);
+  byte_zero(pass.s,pass.len);
+  byte_zero(upbuf,sizeof upbuf);
+  if (wait_pid(&wstat,child) == -1) return err_child();
+  if (wait_crashed(wstat)) return err_child();
+  if (wait_exitcode(wstat)) { sleep(5); return 1; } /* no */
+  return 0; /* yes */
+}
+
+int auth_login(arg) char *arg;
+{
+  int r;
+
+  if (*arg) {
+    if (r = b64decode(arg,str_len(arg),&user) == 1) return err_input();
+  }
+  else {
+    out("334 VXNlcm5hbWU6\r\n"); flush(); /* Username: */
+    if (authgetl() < 0) return -1;
+    if (r = b64decode(authin.s,authin.len,&user) == 1) return err_input();
+  }
+  if (r == -1) die_nomem();
+
+  out("334 UGFzc3dvcmQ6\r\n"); flush(); /* Password: */
+
+  if (authgetl() < 0) return -1;
+  if (r = b64decode(authin.s,authin.len,&pass) == 1) return err_input();
+  if (r == -1) die_nomem();
+
+  if (!user.len || !pass.len) return err_input();
+  return authenticate();
+}
+
+int auth_plain(arg) char *arg;
+{
+  int r, id = 0;
+
+  if (*arg) {
+    if (r = b64decode(arg,str_len(arg),&slop) == 1) return err_input();
+  }
+  else {
+    out("334 \r\n"); flush();
+    if (authgetl() < 0) return -1;
+    if (r = b64decode(authin.s,authin.len,&slop) == 1) return err_input();
+  }
+  if (r == -1 || !stralloc_0(&slop)) die_nomem();
+  while (slop.s[id]) id++; /* ignore authorize-id */
+
+  if (slop.len > id + 1)
+    if (!stralloc_copys(&user,slop.s + id + 1)) die_nomem();
+  if (slop.len > id + user.len + 2)
+    if (!stralloc_copys(&pass,slop.s + id + user.len + 2)) die_nomem();
+
+  if (!user.len || !pass.len) return err_input();
+  return authenticate();
+}
+
+#ifdef AUTHCRAM
+int auth_cram()
+{
+  int i, r;
+  char *s;
+
+  s = unique;
+  s += fmt_uint(s,getpid());
+  *s++ = '.';
+  s += fmt_ulong(s,(unsigned long) now());
+  *s++ = '@';
+  *s++ = 0;
+
+  if (!stralloc_copys(&pass,"<")) die_nomem();
+  if (!stralloc_cats(&pass,unique)) die_nomem();
+  if (!stralloc_cats(&pass,hostname)) die_nomem();
+  if (!stralloc_cats(&pass,">")) die_nomem();
+  if (b64encode(&pass,&slop) < 0) die_nomem();
+  if (!stralloc_0(&slop)) die_nomem();
+
+  out("334 ");
+  out(slop.s);
+  out("\r\n");
+  flush();
+
+  if (authgetl() < 0) return -1;
+  if (r = b64decode(authin.s,authin.len,&slop) == 1) return err_input();
+  if (r == -1 || !stralloc_0(&slop)) die_nomem();
+
+  i = str_chr(slop.s,' ');
+  s = slop.s + i;
+  while (*s == ' ') ++s;
+  slop.s[i] = 0;
+  if (!stralloc_copys(&user,slop.s)) die_nomem();
+  if (!stralloc_copys(&resp,s)) die_nomem();
+
+  if (!user.len || !resp.len) return err_input();
+  return authenticate();
+}
+#endif
+
+struct authcmd {
+  char *text;
+  int (*fun)();
+} authcmds[] = {
+  { "login", auth_login }
+, { "plain", auth_plain }
+#ifdef AUTHCRAM
+, { "cram-md5", auth_cram }
+#endif
+, { 0, err_noauth }
+};
+
+void smtp_auth(arg)
+char *arg;
+{
+  int i;
+  char *cmd = arg;
+
+  if (!hostname || !*childargs)
+  {
+    out("503 auth not available (#5.3.3)\r\n");
+    return;
+  }
+  if (authd) { err_authd(); return; }
+  if (seenmail) { err_authmail(); return; }
+
+  if (!stralloc_copys(&user,"")) die_nomem();
+  if (!stralloc_copys(&pass,"")) die_nomem();
+  if (!stralloc_copys(&resp,"")) die_nomem();
+
+  i = str_chr(cmd,' ');
+  arg = cmd + i;
+  while (*arg == ' ') ++arg;
+  cmd[i] = 0;
+
+  for (i = 0;authcmds[i].text;++i)
+    if (case_equals(authcmds[i].text,cmd)) break;
+
+  switch (authcmds[i].fun(arg)) {
+    case 0:
+      authd = 1;
+      relayclient = "";
+      remoteinfo = user.s;
+      if (!env_unset("TCPREMOTEINFO")) die_read();
+      if (!env_put2("TCPREMOTEINFO",remoteinfo)) die_nomem();
+      out("235 ok, go ahead (#2.0.0)\r\n");
+      break;
+    case 1:
+      out("535 authorization failed (#5.7.0)\r\n");
+  }
+}
+
 struct commands smtpcommands[] = {
   { "rcpt", smtp_rcpt, 0 }
 , { "mail", smtp_mail, 0 }
 , { "data", smtp_data, flush }
+, { "auth", smtp_auth, flush }
 , { "quit", smtp_quit, flush }
 , { "helo", smtp_helo, flush }
 , { "ehlo", smtp_ehlo, flush }
@@ -429,8 +665,13 @@ struct commands smtpcommands[] = {
 , { 0, err_unrecog, flush }
 } ;
 
-void main()
+void main(argc,argv)
+int argc;
+char **argv;
 {
+  hostname = argv[1];
+  childargs = argv + 2;
+
   sig_pipeignore();
   if (chdir(auto_qmail) == -1) die_control();
   setup();

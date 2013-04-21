@@ -3,6 +3,11 @@
 qmail-smtpd \- receive mail via SMTP
 .SH SYNOPSIS
 .B qmail-smtpd
+[
+.I hostname
+.I checkprogram
+.I subprogram
+]
 .SH DESCRIPTION
 .B qmail-smtpd
 receives mail messages via the Simple Mail Transfer Protocol (SMTP)
@@ -23,7 +28,29 @@ or
 header fields.
 
 .B qmail-smtpd
-supports ESMTP, including the 8BITMIME and PIPELINING options.
+supports ESMTP, including the 8BITMIME, PIPELINING, and AUTH options.
+
+.B qmail-smtpd
+can accept LOGIN, PLAIN, and CRAM-MD5 AUTH types.  It invokes
+.IR checkprogram ,
+which reads on file descriptor 3 the username, a 0 byte, the password
+or challenge derived from
+.IR hostname ,
+another 0 byte, a CRAM-MD5 response (if applicable to the AUTH type),
+and a final 0 byte.
+.I checkprogram
+invokes
+.I subprogram
+upon successful authentication, which should in turn return 0 to
+.BR qmail-smtpd ,
+effectively setting the environment variables RELAYCLIENT and TCPREMOTEINFO
+(any supplied value replaced with the authenticated username).
+.B qmail-smtpd
+will reject the authentication attempt if it receives a nonzero return
+value from
+.I checkprogram
+or
+.IR subprogram .
 .SH TRANSPARENCY
 .B qmail-smtpd
 converts the SMTP newline convention into the UNIX newline convention
@@ -181,3 +208,6 @@ qmail-inject(8),
 qmail-newmrh(8),
 qmail-queue(8),
 qmail-remote(8)
+.SH "HISTORY"
+The patch enabling the ESMTP AUTH option is not part of the standard
+qmail-1.03 distribution.

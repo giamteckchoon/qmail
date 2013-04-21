@@ -1,0 +1,62 @@
+0.20
+- initial release
+
+0.21
+- wrong condition in analysis of response. fixed
+- unnecesary debug output freezed eudora. now it should work.
+
+0.22
+- added auth state support as described in rfc 2554. It prevents you
+from authenticated again, when you are already authenticated.
+- fixed few error codes to conform with rfc
+- errors during authentication does not end the smtp connection anymore as
+rfc requires.
+- second cram-md5 authentication after failure of first resulted in wrong
+challenge generation (in all subsequent authentications too)
+- major bug in login implementation fixed (bug introduced in 0.21). it
+should work again
+- added a more clean netscape compatibility fix (documented in readme)
+
+0.23
+- added the new style (rfc recommended) greeting message. Yoo can select
+beetwen them by #defining or #undefining USE_NEW_GREETING and
+USE_OLD_GREETING on the begining of qmail-smtpd.c. You can even enable both
+to maintain highest degree of compatibility with various clients. This fix
+was suggested by David Harris <David.Harris@pmail.gen.nz>, the developer of
+Pegasus Mail.
+
+0.24
+- cram-md5 fix. I wonder, how it ever worked for me. 1 week of my beta
+tests. 3 months of tests on our mail server and the fundamental bug in
+cram-md5 has been found so long after 0.23 release? Anyway it should work
+now.
+
+0.25
+- changed the error message when problems with starting checkpassword
+occour. This was a big source of question ("out of memory") that i receive
+in my e-mail.
+- Joerg Strohmayer <usenet@bigfoot.de> showed me light in the dark. I've
+read the SMTP AUTH RFC and assumend that if it uses SASL'a PLAIN, it has to
+be implemented exactly like SASL RFC says. Poor me... SMTP AUTH says that it
+also has to be base64 encoded. This is the relief for the infamous
+NETSCAPE_WORKAROUND. Again big thanks for Joerg for not only telling me
+where the problem is but also for providing the fully working patch.
+
+0.26
+- security fix - if your checkpassword crashed, attacker would get the relay
+permission. Now it should work. Reported by Javier Kohen <jkohen@tough.com>,
+thank you!
+
+0.30
+- codebase switch. From now on have merged efforts with Eric M. Johnston
+<emj@postal.net> so now there are no more 2 separate auth patches but
+just one.
+- arguments to qmail-smtpd have changed! See README.auth for further info.
+- the code is djbized right now
+- TCPREMOTEINFO is set if sender is properly authenticated.
+
+0.31
+- bug: AUTH PLAIN 334 response not RFC compliant. Reported by Mark Crispin
+  <mrc@CAC.Washington.EDU>.
+- change: Set TCPREMOTEINFO environment variable to authenticated username.
+  (Previously only set locally to qmail-smtpd.)
