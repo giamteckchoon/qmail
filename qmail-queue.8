@@ -40,6 +40,38 @@ and does not enforce any restrictions on its contents.
 However, the recipients probably expect to see a proper header,
 as described in
 .BR qmail-header(5) .
+.SH "CONTROL FILES"
+.TP 5
+.I taps
+Should contain regex syntax of email addresses to tap and
+the associated email address to send the copy to. The two
+fields should be separated by a colon.
+
+To tap all email and send a copy to
+.I admin@example.com
+add a line like:
+.EX
+     .*:admin@example.com
+.EE
+
+To tap a whole domain (i.e.
+.I domain.com
+) and send a copy to
+.I admin@example.com
+add a line like:
+.EX
+     .*@domain.com:admin@example.com
+.EE
+
+To tap an individual email address (i.e.
+.I user@domain.com
+) and send a copy to
+.I archive@example.com
+add a line like:
+.EX
+     user@domain.com:archive@example.com
+.EE
+
 .SH "FILESYSTEM RESTRICTIONS"
 .B qmail-queue
 imposes two constraints on the queue structure:

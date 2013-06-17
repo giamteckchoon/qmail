@@ -384,3 +384,4 @@ setup
 check
 qmail-todo.o
 qmail-todo
+qregex.o

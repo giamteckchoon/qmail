@@ -257,6 +257,7 @@ void main()
 
   do_str("smtpgreeting",1,"smtpgreeting","SMTP greeting: 220 ");
   do_lst("smtproutes","No artificial SMTP routes.","SMTP route: ","");
+  do_lst("taps","No tap email address.","Tap email address: ","");
   do_int("timeoutconnect","60","SMTP client connection timeout is "," seconds");
   do_int("timeoutremote","1200","SMTP client data timeout is "," seconds");
   do_int("timeoutsmtpd","1200","SMTP server data timeout is "," seconds");
@@ -292,6 +293,7 @@ void main()
     if (str_equal(d->d_name,"rcpthosts")) continue;
     if (str_equal(d->d_name,"smtpgreeting")) continue;
     if (str_equal(d->d_name,"smtproutes")) continue;
+    if (str_equal(d->d_name,"taps")) continue;
     if (str_equal(d->d_name,"timeoutconnect")) continue;
     if (str_equal(d->d_name,"timeoutremote")) continue;
     if (str_equal(d->d_name,"timeoutsmtpd")) continue;
