@@ -6,6 +6,14 @@ SHELL=/bin/sh
 
 default: it
 
+prep:
+	./setup-conf-spawn.sh
+
+testcompile: prep compile makelib
+	./compile syncdir.c
+	./makelib libsyncdir.a syncdir.o
+	make it man
+
 addresses.0: \
 addresses.5
 	nroff -man addresses.5 > addresses.0
@@ -277,6 +285,8 @@ exit.h auto_spawn.h
 clean: \
 TARGETS
 	rm -f `cat TARGETS`
+	rm -f *.o *.a
+	if [ -f conf-spawn.orig ] ; then mv -f conf-spawn.orig conf-spawn; fi
 
 coe.o: \
 compile coe.c coe.h
