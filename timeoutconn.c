@@ -20,6 +20,23 @@
 struct ip_address iplocal;
 int bindlocal = 0;
 
+/* change outgoing ip */
+int bind_by_changeoutgoingip(s,ip,force)
+int s;
+struct ip_address *ip;
+int force;
+{
+  if (!force) if (bindlocal) return 0; /* already bind so we skip it */
+  if (ip->d[0] || ip->d[1] || ip->d[2] || ip->d[3]) {
+    iplocal.d[0] = ip->d[0];
+    iplocal.d[1] = ip->d[1];
+    iplocal.d[2] = ip->d[2];
+    iplocal.d[3] = ip->d[3];
+    bindlocal = 1;
+  }
+  return 0;
+}
+
 /* Modified from http://qmail.org/local-bind */
 int bind_by_bindroutes(s,ip,force)
 int s;
