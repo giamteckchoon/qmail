@@ -42,12 +42,21 @@ See the corresponding man pages for further details.
 .ta 5c 10c
 control	default	used by
 
+.I aliasempty	\fR./Mailbox	\fRqmail svc run script
 .I badmailfrom	\fR(none)	\fRqmail-smtpd, qmail-qmtpd
 .I bindroutes	\fR(none)	\fRqmail-remote
 .I bouncefrom	\fRMAILER-DAEMON	\fRqmail-send
 .I bouncehost	\fIme	\fRqmail-send
+.I checkpassword	\fRcheckpassword	\fRpop3d, pop3sd init script
+.I concurrencyimapd	\fR20	\fRimapd svc run script
+.I concurrencyimapsd	\fR20	\fRimapsd svc run script
 .I concurrencylocal	\fR10	\fRqmail-send
+.I concurrencymsad	\fR20	\fRsubmission svc run script
+.I concurrencypop3d	\fR20	\fRpop3d svc run script
+.I concurrencypop3sd	\fR20	\fRpop3sd svc run script
 .I concurrencyremote	\fR20	\fRqmail-send
+.I concurrencysmtpd	\fR20	\fRsmtpd svc run script
+.I concurrencysmtpsd	\fR20	\fRsmtpsd svc run script
 .I defaultdomain	\fIme	\fRqmail-inject
 .I defaulthost	\fIme	\fRqmail-inject
 .I databytes	\fR0	\fRqmail-smtpd
@@ -59,13 +68,17 @@ control	default	used by
 .I idhost	\fIme	\fRqmail-inject
 .I localiphost	\fIme	\fRqmail-smtpd
 .I locals	\fIme	\fRqmail-send
+.I logger	\fRsplogger	\fRall init/run scripts
 .I morercpthosts	\fR(none)	\fRqmail-smtpd
 .I outgoingip	\fR0.0.0.0	\fRqmail-remote
 .I percenthack	\fR(none)	\fRqmail-send
 .I plusdomain	\fIme	\fRqmail-inject
 .I qmqpservers	\fR(none)	\fRqmail-qmqpc
 .I queuelifetime	\fR604800	\fRqmail-send
+.I rblcheckdomains	\fR(none)	\fRsvc smtpd run script
+.I rbldomains	\fR(none)	\fRsvc smtpd run script
 .I rcpthosts	\fR(none)	\fRqmail-smtpd
+.I rwldomains	\fR(none)	\fRsvc smtpd run script
 .I smtpgreeting	\fIme	\fRqmail-smtpd
 .I smtproutes	\fR(none)	\fRqmail-remote
 .I taps		\fR(none)	\fRqmail-queue

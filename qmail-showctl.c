@@ -214,12 +214,21 @@ void main()
     _exit(111);
   }
 
+  do_lst("aliasempty","./Mailbox","Default delivery target contains: ","");
   do_lst("badmailfrom","Any MAIL FROM is allowed.",""," not accepted in MAIL FROM.");
   do_lst("bindroutes","No binding routes.","Binding route: ","");
   do_str("bouncefrom",0,"MAILER-DAEMON","Bounce user name is ");
   do_str("bouncehost",1,"bouncehost","Bounce host name is ");
+  do_str("checkpassword",0,"checkpassword","Password checking program is ");
+  do_int("concurrencyimapd","20","IMAP daemon concurrency is ","");
+  do_int("concurrencyimapsd","20","IMAP over SSL daemon concurrency is ","");
   do_int("concurrencylocal","10","Local concurrency is ","");
+  do_int("concurrencymsad","20","Mail Submission Agent daemon concurrency is ","");
+  do_int("concurrencypop3d","20","POP-3 daemon concurrency is ","");
+  do_int("concurrencypop3sd","20","POP-3 over SSL daemon concurrency is ","");
   do_int("concurrencyremote","20","Remote concurrency is ","");
+  do_int("concurrencysmtpd","20","SMTP daemon concurrency is ","");
+  do_int("concurrencysmtpsd","20","SMTP over SSL daemon concurrency is ","");
   do_int("databytes","0","SMTP DATA limit is "," bytes");
   do_str("defaultdomain",1,"defaultdomain","Default domain name is ");
   do_str("defaulthost",1,"defaulthost","Default host name is ");
@@ -231,12 +240,16 @@ void main()
   do_str("idhost",1,"idhost","Message-ID host name is ");
   do_str("localiphost",1,"localiphost","Local IP address becomes ");
   do_lst("locals","Messages for me are delivered locally.","Messages for "," are delivered locally.");
+  do_str("logger",0,"multilog t /var/log/{}","Logging is done via: ");
   do_str("me",0,"undefined! Uh-oh","My name is ");
   do_str("outgoingip",0,"0.0.0.0","Outgoing IP address is ");
   do_lst("percenthack","The percent hack is not allowed.","The percent hack is allowed for user%host@",".");
   do_str("plusdomain",1,"plusdomain","Plus domain name is ");
   do_lst("qmqpservers","No QMQP servers.","QMQP server: ",".");
   do_int("queuelifetime","604800","Message lifetime in the queue is "," seconds");
+  do_lst("rblcheckdomains","No RBL check servers.","RBL check server: ","");
+  do_lst("rbldomains","No RBL servers.","RBL server: ","");
+  do_lst("rwldomains","No RWL servers.","RWL server: ","");
 
   if (do_lst("rcpthosts","SMTP clients may send messages to any recipient.","SMTP clients may send messages to recipients at ","."))
     do_lst("morercpthosts","No effect.","SMTP clients may send messages to recipients at ",".");
@@ -269,12 +282,11 @@ void main()
   while (d = readdir(dir)) {
     if (str_equal(d->d_name,".")) continue;
     if (str_equal(d->d_name,"..")) continue;
-    if (str_equal(d->d_name,"bouncefrom")) continue;
-    if (str_equal(d->d_name,"bouncehost")) continue;
     if (str_equal(d->d_name,"badmailfrom")) continue;
+    if (str_equal(d->d_name,"bindroutes")) continue;
     if (str_equal(d->d_name,"bouncefrom")) continue;
     if (str_equal(d->d_name,"bouncehost")) continue;
-    if (str_equal(d->d_name,"bindroutes")) continue;
+    if (str_equal(d->d_name,"checkpassword")) continue;
     if (str_equal(d->d_name,"concurrencylocal")) continue;
     if (str_equal(d->d_name,"concurrencyremote")) continue;
     if (str_equal(d->d_name,"databytes")) continue;
@@ -303,6 +315,18 @@ void main()
     if (str_equal(d->d_name,"timeoutremote")) continue;
     if (str_equal(d->d_name,"timeoutsmtpd")) continue;
     if (str_equal(d->d_name,"virtualdomains")) continue;
+    if (str_equal(d->d_name,"aliasempty")) continue;
+    if (str_equal(d->d_name,"concurrencyimapd")) continue;
+    if (str_equal(d->d_name,"concurrencyimapsd")) continue;
+    if (str_equal(d->d_name,"concurrencymsad")) continue;
+    if (str_equal(d->d_name,"concurrencypop3d")) continue;
+    if (str_equal(d->d_name,"concurrencypop3sd")) continue;
+    if (str_equal(d->d_name,"concurrencysmtpd")) continue;
+    if (str_equal(d->d_name,"concurrencysmtpsd")) continue;
+    if (str_equal(d->d_name,"logger")) continue;
+    if (str_equal(d->d_name,"rblcheckdomains")) continue;
+    if (str_equal(d->d_name,"rbldomains")) continue;
+    if (str_equal(d->d_name,"rwldomains")) continue;
     substdio_puts(subfdout,"\n");
     substdio_puts(subfdout,d->d_name);
     substdio_puts(subfdout,": I have no idea what this file does.\n");
