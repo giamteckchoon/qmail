@@ -223,6 +223,7 @@ void main()
   do_int("databytes","0","SMTP DATA limit is "," bytes");
   do_str("defaultdomain",1,"defaultdomain","Default domain name is ");
   do_str("defaulthost",1,"defaulthost","Default host name is ");
+  do_lst("domainbindings","No sender domain based local ip bindings.","Sender domain local IP binding: ","");
   do_str("doublebouncehost",1,"doublebouncehost","2B recipient host: ");
   do_str("doublebounceto",0,"postmaster","2B recipient user: ");
   do_str("envnoathost",1,"envnoathost","Presumed domain name is ");
@@ -279,6 +280,7 @@ void main()
     if (str_equal(d->d_name,"databytes")) continue;
     if (str_equal(d->d_name,"defaultdomain")) continue;
     if (str_equal(d->d_name,"defaulthost")) continue;
+    if (str_equal(d->d_name,"domainbindings")) continue;
     if (str_equal(d->d_name,"doublebouncehost")) continue;
     if (str_equal(d->d_name,"doublebounceto")) continue;
     if (str_equal(d->d_name,"envnoathost")) continue;

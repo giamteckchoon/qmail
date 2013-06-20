@@ -46,6 +46,15 @@ stralloc sender = {0};
 /* for outgoing ip */
 stralloc outgoingip = {0};
 struct ip_address outip;
+/* for domainbindings
+ * References:
+ *   http://pyropus.ca/software/misc/qmail-1.03-domainbindings-1.2.patch
+ *   http://rno-consultores.com/mail/qmail/qmail-1.03_outgoingips.patch
+ */
+stralloc outdomain = {0};
+stralloc senderips = {0};
+struct constmap mapsenderips;
+struct ip_address outip2;
 
 saa reciplist = {0};
 
@@ -59,6 +68,8 @@ for (i = 0;i < sa->len;++i) {
 ch = sa->s[i]; if (ch < 33) ch = '?'; if (ch > 126) ch = '?';
 if (substdio_put(subfdoutsmall,&ch,1) == -1) _exit(0); } }
 
+void temp_badip() { out("Z\
+Unable to parse IP address in control/domainbindings (#4.3.0)\n"); zerodie(); }
 void temp_noip() { out("Zinvalid ipaddr in control/outgoingip (#4.3.0)\n"); zerodie(); }
 void temp_nomem() { out("ZOut of memory. (#4.3.0)\n"); zerodie(); }
 void temp_oserr() { out("Z\
@@ -357,6 +368,14 @@ void getcontrols()
   if (outip.d[0] || outip.d[1] || outip.d[2] || outip.d[3]) {
     if (!ipme_is(&outip)) temp_noip();
   }
+  switch(control_readfile(&senderips,"control/domainbindings",0)) {
+    case -1:
+      temp_control();
+    case 0:
+      if (!constmap_init(&mapsenderips,"",0,1)) temp_nomem(); break;
+    case 1:
+      if (!constmap_init(&mapsenderips,senderips.s,senderips.len,1)) temp_nomem(); break;
+  }
 }
 
 void main(argc,argv)
@@ -371,7 +390,8 @@ char **argv;
   int flagallaliases;
   int flagalias;
   char *relayhost;
- 
+  char *senderdomainip;
+
   sig_pipeignore();
   if (argc < 4) perm_usage();
   if (chdir(auto_qmail) == -1) temp_chdir();
@@ -398,7 +418,34 @@ char **argv;
 
 
   addrmangle(&sender,argv[2],&flagalias,0);
- 
+
+  /* for domainbindings
+   * 'canonhost' now should contain the canonical name of the sender's host.
+   * Most of the time this is a local domain name, but sometimes the domain
+   * name of a forwarded email.
+   */
+  if(!stralloc_copy(&outdomain,&canonhost)) temp_nomem();
+  senderdomainip = 0;
+  for (i = 0;i <= outdomain.len;++i) {
+    if ((i == 0) || (i == outdomain.len) || (outdomain.s[i] == '.')) {
+      if (senderdomainip = constmap(&mapsenderips,outdomain.s + i,outdomain.len - i)) {
+	break;
+      }
+    }
+  }
+  if (senderdomainip && !*senderdomainip) senderdomainip = 0;
+
+  if (senderdomainip) {
+    if (!ip_scan(senderdomainip,&outip2)) temp_badip();
+    if (!stralloc_copy(&helohost,&outdomain)) temp_nomem(); /* could be in control file */
+  }
+  else {
+    outip2.d[0] = outip2.d[1] = outip2.d[2] = outip2.d[3] = (unsigned long)0;
+  }
+  if (outip2.d[0] || outip2.d[1] || outip2.d[2] || outip2.d[3]) {
+    if (!ipme_is(&outip2)) temp_badip();
+  }
+
   if (!saa_readyplus(&reciplist,0)) temp_nomem();
   if (ipme_init() != 1) temp_oserr();
  
@@ -446,6 +493,11 @@ char **argv;
  
     smtpfd = socket(AF_INET,SOCK_STREAM,0);
     if (smtpfd == -1) temp_oserr();
+
+    /* for domainbindings */
+    if (outip2.d[0] || outip2.d[1] || outip2.d[2] || outip2.d[3]) {
+      bind_by_changeoutgoingip(smtpfd, &outip2, 1);
+    }
 
     /* for bindroutes */
     bind_by_bindroutes(smtpfd, &ip.ix[i].ip, 0);

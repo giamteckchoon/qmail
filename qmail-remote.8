@@ -149,6 +149,59 @@ on stopping qmail-remote sending to this host
 takes precedence over
 .IR outgoingip .
 .TP 5
+.I domainbindings
+Local IP bindings based on envelope sender domain.
+Each binding has the form
+.IR domain\fB:\fIlocal-ip ,
+without any extra spaces.
+If
+.I domain
+matches
+.IR host ,
+.B qmail-remote
+will bind the local side of the socket for the outgoing connection to
+.IR local-ip .
+.I local-ip
+may be empty;
+this tells
+.B qmail-remote
+to let the OS choose the local address for outgoing connections as usual.
+.I domainbindings
+may include wildcards:
+
+.EX
+   example.com:5.6.7.8
+   .example.com:5.6.7.9
+   heaven.af.mil:1.2.3.4
+.EE
+
+Here the connection for any message with an envelope sender address ending with
+.B .example.com
+(but not
+.B example.com
+itself)
+is bound to local address
+.BR 5.6.7.9 ,
+while envelope senders in
+.B example.com
+are bound to 
+.BR 5.6.7.8 ,
+and senders in
+.B heaven.af.mil
+are bound to 
+.BR 1.2.3.4 .
+All other outgoing connections (including messages with the null return-path)
+use the OS-chosen default local address. The
+.B qmail
+system does not protect you if you specify an invalid local address to
+bind to.
+
+.IR domainbindings
+takes precedence over
+.IR bindroutes
+and
+.IR outgoingip .
+.TP 5
 .I helohost
 Current host name,
 for use solely in saying hello to the remote SMTP server.
@@ -157,7 +210,9 @@ Default:
 if that is supplied;
 otherwise
 .B qmail-remote
-refuses to run.
+refuses to run.  If the envelope sender address matches a domain in the
+.IR domainbindings
+control file, the envelope sender domain will be used instead of this value.
 .TP 5
 .I outgoingip
 IP address to be used on outgoing connections.
