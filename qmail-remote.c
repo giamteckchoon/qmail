@@ -43,6 +43,9 @@ stralloc routes = {0};
 struct constmap maproutes;
 stralloc host = {0};
 stralloc sender = {0};
+/* for outgoing ip */
+stralloc outgoingip = {0};
+struct ip_address outip;
 
 saa reciplist = {0};
 
@@ -56,6 +59,7 @@ for (i = 0;i < sa->len;++i) {
 ch = sa->s[i]; if (ch < 33) ch = '?'; if (ch > 126) ch = '?';
 if (substdio_put(subfdoutsmall,&ch,1) == -1) _exit(0); } }
 
+void temp_noip() { out("Zinvalid ipaddr in control/outgoingip (#4.3.0)\n"); zerodie(); }
 void temp_nomem() { out("ZOut of memory. (#4.3.0)\n"); zerodie(); }
 void temp_oserr() { out("Z\
 System resources temporarily unavailable. (#4.3.0)\n"); zerodie(); }
@@ -328,6 +332,7 @@ int flagcname;
 
 void getcontrols()
 {
+  int r;
   if (control_init() == -1) temp_control();
   if (control_readint(&timeout,"control/timeoutremote") == -1) temp_control();
   if (control_readint(&timeoutconnect,"control/timeoutconnect") == -1)
@@ -341,6 +346,16 @@ void getcontrols()
       if (!constmap_init(&maproutes,"",0,1)) temp_nomem(); break;
     case 1:
       if (!constmap_init(&maproutes,routes.s,routes.len,1)) temp_nomem(); break;
+  }
+  r = control_readline(&outgoingip,"control/outgoingip");
+  if (-1 == r) { if (errno == error_nomem) temp_nomem(); temp_control(); }
+  if (0 == r && !stralloc_copys(&outgoingip, "0.0.0.0")) temp_nomem();
+  if (str_equal(outgoingip.s, "0.0.0.0")) {
+    outip.d[0]=outip.d[1]=outip.d[2]=outip.d[3]=(unsigned long) 0;
+  }
+  else if (!ip_scan(outgoingip.s, &outip)) temp_noip();
+  if (outip.d[0] || outip.d[1] || outip.d[2] || outip.d[3]) {
+    if (!ipme_is(&outip)) temp_noip();
   }
 }
 
@@ -434,6 +449,14 @@ char **argv;
 
     /* for bindroutes */
     bind_by_bindroutes(smtpfd, &ip.ix[i].ip, 0);
+
+    /* for outgoingip
+     * we just need to make sure outip are not 0.0.0.0
+     * which is the system defaults so no point to change it
+     */
+    if (outip.d[0] || outip.d[1] || outip.d[2] || outip.d[3]) {
+      bind_by_changeoutgoingip(smtpfd, &outip, 0);
+    }
 
     if (timeoutconn(smtpfd,&ip.ix[i].ip,(unsigned int) port,timeoutconnect) == 0) {
       tcpto_err(&ip.ix[i].ip,0);

@@ -145,6 +145,9 @@ on stopping qmail-remote sending to this host
    555.123.123.123:this-isnt-an-ip-address
 .EE
 
+.IR bindroutes
+takes precedence over
+.IR outgoingip .
 .TP 5
 .I helohost
 Current host name,
@@ -155,6 +158,13 @@ if that is supplied;
 otherwise
 .B qmail-remote
 refuses to run.
+.TP 5
+.I outgoingip
+IP address to be used on outgoing connections.
+Default: system-defined.
+The value
+.IR 0.0.0.0
+is equivalent to the system default.
 .TP 5
 .I smtproutes
 Artificial SMTP routes.
