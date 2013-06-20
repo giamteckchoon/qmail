@@ -1323,10 +1323,10 @@ auto_usera.h
 
 qmail-qmqpc: \
 load qmail-qmqpc.o slurpclose.o timeoutread.o timeoutwrite.o \
-timeoutconn.o ip.o control.o auto_qmail.o sig.a ndelay.a open.a \
+timeoutconn.o constmap.o case.a ip.o control.o auto_qmail.o sig.a ndelay.a open.a \
 getln.a substdio.a stralloc.a alloc.a error.a str.a fs.a socket.lib
 	./load qmail-qmqpc slurpclose.o timeoutread.o \
-	timeoutwrite.o timeoutconn.o ip.o control.o auto_qmail.o \
+	timeoutwrite.o timeoutconn.o constmap.o case.a ip.o control.o auto_qmail.o \
 	sig.a ndelay.a open.a getln.a substdio.a stralloc.a alloc.a \
 	error.a str.a fs.a  `cat socket.lib`
 
@@ -2078,8 +2078,10 @@ find-systype trycpp.c
 tcp-env: \
 load tcp-env.o dns.o remoteinfo.o timeoutread.o timeoutwrite.o \
 timeoutconn.o ip.o ipalloc.o case.a ndelay.a sig.a env.a getopt.a \
-stralloc.a alloc.a substdio.a error.a str.a fs.a dns.lib socket.lib
+stralloc.a alloc.a substdio.a error.a str.a fs.a dns.lib socket.lib \
+constmap.o control.o open.a getln.a
 	./load tcp-env dns.o remoteinfo.o timeoutread.o \
+	constmap.o control.o open.a getln.a \
 	timeoutwrite.o timeoutconn.o ip.o ipalloc.o case.a ndelay.a \
 	sig.a env.a getopt.a stralloc.a alloc.a substdio.a error.a \
 	str.a fs.a  `cat dns.lib` `cat socket.lib`
@@ -2108,7 +2110,7 @@ compile tcpto_clean.c tcpto.h open.h substdio.h readwrite.h
 
 timeoutconn.o: \
 compile timeoutconn.c ndelay.h select.h error.h readwrite.h ip.h \
-byte.h timeoutconn.h
+byte.h timeoutconn.h control.h constmap.h stralloc.h
 	./compile timeoutconn.c
 
 timeoutread.o: \

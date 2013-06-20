@@ -215,6 +215,7 @@ void main()
   }
 
   do_lst("badmailfrom","Any MAIL FROM is allowed.",""," not accepted in MAIL FROM.");
+  do_lst("bindroutes","No binding routes.","Binding route: ","");
   do_str("bouncefrom",0,"MAILER-DAEMON","Bounce user name is ");
   do_str("bouncehost",1,"bouncehost","Bounce host name is ");
   do_int("concurrencylocal","10","Local concurrency is ","");
@@ -271,6 +272,7 @@ void main()
     if (str_equal(d->d_name,"badmailfrom")) continue;
     if (str_equal(d->d_name,"bouncefrom")) continue;
     if (str_equal(d->d_name,"bouncehost")) continue;
+    if (str_equal(d->d_name,"bindroutes")) continue;
     if (str_equal(d->d_name,"concurrencylocal")) continue;
     if (str_equal(d->d_name,"concurrencyremote")) continue;
     if (str_equal(d->d_name,"databytes")) continue;

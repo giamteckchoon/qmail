@@ -114,6 +114,38 @@ arguments.
 always exits zero.
 .SH "CONTROL FILES"
 .TP 5
+.I bindroutes
+Artificial interface binding routes.
+Each route has the form
+.IR remote-address\fB:\fIlocal-address ,
+without any extra spaces.
+If the address of the host to which we are delivering matches the remote
+address, then bind the socket to the interface matching the local
+address, making it appear as if the connection had originated from the
+named local address instead of the default local address.
+.I bindroutes
+may contain suffix wildcards.
+
+Send this on the internal net
+.EX
+   10.:10.0.0.1
+.EE
+
+Rest goes on external
+.B mail
+address (yes, its bogus!)
+.EX
+   :301.32.1.1
+.EE
+
+Hey, we could
+.B cheat
+on stopping qmail-remote sending to this host
+.EX
+   555.123.123.123:this-isnt-an-ip-address
+.EE
+
+.TP 5
 .I helohost
 Current host name,
 for use solely in saying hello to the remote SMTP server.

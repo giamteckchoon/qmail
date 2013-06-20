@@ -431,7 +431,10 @@ char **argv;
  
     smtpfd = socket(AF_INET,SOCK_STREAM,0);
     if (smtpfd == -1) temp_oserr();
- 
+
+    /* for bindroutes */
+    bind_by_bindroutes(smtpfd, &ip.ix[i].ip, 0);
+
     if (timeoutconn(smtpfd,&ip.ix[i].ip,(unsigned int) port,timeoutconnect) == 0) {
       tcpto_err(&ip.ix[i].ip,0);
       partner = ip.ix[i].ip;
