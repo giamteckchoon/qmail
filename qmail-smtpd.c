@@ -357,8 +357,8 @@ int *hops;
         if (flagmaybex) if (pos == 7) ++*hops;
         if (pos < 2) if (ch != "\r\n"[pos]) flagmaybey = 0;
         if (flagmaybey) if (pos == 1) flaginheader = 0;
+        ++pos;
       }
-      ++pos;
       if (ch == '\n') { pos = 0; flagmaybex = flagmaybey = flagmaybez = 1; }
     }
     switch(state) {
