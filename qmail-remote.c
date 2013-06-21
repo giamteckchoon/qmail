@@ -55,6 +55,10 @@ stralloc outdomain = {0};
 stralloc senderips = {0};
 struct constmap mapsenderips;
 struct ip_address outip2;
+/* for helohostbindings */
+stralloc helohostbind = {0};
+stralloc helohostname = {0};
+struct constmap maphelohostbind;
 
 saa reciplist = {0};
 
@@ -376,6 +380,14 @@ void getcontrols()
     case 1:
       if (!constmap_init(&mapsenderips,senderips.s,senderips.len,1)) temp_nomem(); break;
   }
+  switch(control_readfile(&helohostbind,"control/helohostbindings",0)) {
+    case -1:
+      temp_control();
+    case 0:
+      if (!constmap_init(&maphelohostbind,"",0,1)) temp_nomem(); break;
+    case 1:
+      if (!constmap_init(&maphelohostbind,helohostbind.s,helohostbind.len,1)) temp_nomem(); break;
+  }
 }
 
 void main(argc,argv)
@@ -391,6 +403,10 @@ char **argv;
   int flagalias;
   char *relayhost;
   char *senderdomainip;
+  char *helodomain;
+  char outipstr[IPFMT];
+  struct ip_address outiplocal;
+  int iplocallen = 0;
 
   sig_pipeignore();
   if (argc < 4) perm_usage();
@@ -508,6 +524,27 @@ char **argv;
      */
     if (outip.d[0] || outip.d[1] || outip.d[2] || outip.d[3]) {
       bind_by_changeoutgoingip(smtpfd, &outip, 0);
+    }
+
+    /* for helohostbindings */
+    if (get_bind_iplocal(&outiplocal)) {
+      iplocallen = ip_fmt(outipstr,&outiplocal);
+      if (iplocallen > 0) {
+        outipstr[iplocallen] = 0;
+        if (!stralloc_copyb(&outdomain, outipstr, iplocallen)) temp_nomem();
+        stralloc_0(&outdomain);
+        outdomain.len--;
+        helodomain = 0;
+        helodomain = constmap(&maphelohostbind,outdomain.s,outdomain.len);
+        if (helodomain && !*helodomain) helodomain = 0; /* no match */
+        if (helodomain) { /* match */
+          /* copy the helodomain into helohostname */
+          if (!stralloc_copys(&helohostname, helodomain)) temp_nomem();
+          if (!str_equal(helohost.s, helodomain)) {
+            if (!stralloc_copy(&helohost, &helohostname)) temp_nomem();
+          }
+        }
+      }
     }
 
     if (timeoutconn(smtpfd,&ip.ix[i].ip,(unsigned int) port,timeoutconnect) == 0) {

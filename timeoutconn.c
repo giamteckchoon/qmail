@@ -20,6 +20,20 @@
 struct ip_address iplocal;
 int bindlocal = 0;
 
+/* get current iplocal address */
+int get_bind_iplocal(ip)
+struct ip_address *ip;
+{
+  if (iplocal.d[0] || iplocal.d[1] || iplocal.d[2] || iplocal.d[3]) {
+    ip->d[0] = iplocal.d[0];
+    ip->d[1] = iplocal.d[1];
+    ip->d[2] = iplocal.d[2];
+    ip->d[3] = iplocal.d[3];
+    return 1;
+  }
+  return 0;
+}
+
 /* change outgoing ip */
 int bind_by_changeoutgoingip(s,ip,force)
 int s;

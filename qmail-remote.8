@@ -213,6 +213,53 @@ otherwise
 refuses to run.  If the envelope sender address matches a domain in the
 .IR domainbindings
 control file, the envelope sender domain will be used instead of this value.
+If the local IP binding matches the one in the
+.I helohostbindings
+control file, then the matched name in the
+.I helohostbindings
+will be used instead.
+.TP 5
+.I helohostbindings
+Local helo name bindings based on local IP bind used by
+.IR bindroutes ,
+.IR outgoingip
+and
+.IR domainbindings .
+Each binding has the form
+.IR local-ip\fB:\fIhelodomain ,
+without any extra spaces.  If
+.IR local-ip
+matches the binded IP except 0.0.0.0 (system default),
+.BR qmail-remote
+will set the helo name to
+.IR helodomain
+instead of default
+.IR me .
+Example:
+
+.EX
+   5.6.7.8:host1.example.com
+   5.6.7.9:host2.example.com
+.EE
+
+If there is a local IP bind used by
+.IR bindroutes
+,
+.IR outgoingip
+or
+.IR domainbindings
+, will trigger
+.IR helohostbindings .
+If local IP is bound to
+.BR 5.6.7.8 ,
+then
+.BR qmail-remote
+will set the helo name to
+.BR host1.example.com .
+Likewise for
+.BR 5.6.7.9
+will set the helo name to
+.BR host2.example.com .
 .TP 5
 .I outgoingip
 IP address to be used on outgoing connections.

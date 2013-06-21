@@ -237,6 +237,7 @@ void main()
   do_str("doublebounceto",0,"postmaster","2B recipient user: ");
   do_str("envnoathost",1,"envnoathost","Presumed domain name is ");
   do_str("helohost",1,"helohost","SMTP client HELO host name is ");
+  do_lst("helohostbindings","No sender helohost based local ip bindings (default to me).","Sender helohost local IP binding: ","");
   do_str("idhost",1,"idhost","Message-ID host name is ");
   do_str("localiphost",1,"localiphost","Local IP address becomes ");
   do_lst("locals","Messages for me are delivered locally.","Messages for "," are delivered locally.");
@@ -297,6 +298,7 @@ void main()
     if (str_equal(d->d_name,"doublebounceto")) continue;
     if (str_equal(d->d_name,"envnoathost")) continue;
     if (str_equal(d->d_name,"helohost")) continue;
+    if (str_equal(d->d_name,"helohostbindings")) continue;
     if (str_equal(d->d_name,"idhost")) continue;
     if (str_equal(d->d_name,"localiphost")) continue;
     if (str_equal(d->d_name,"locals")) continue;
